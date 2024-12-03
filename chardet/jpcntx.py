@@ -22,4 +22,6 @@ class SJISContextAnalysis(JapaneseContextAnalysis):
         self._charset_name = 'SHIFT_JIS'
 
 class EUCJPContextAnalysis(JapaneseContextAnalysis):
-    pass
+    def __init__(self):
+        super().__init__()
+        self._charset_name = 'EUC-JP'
