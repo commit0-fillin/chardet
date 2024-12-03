@@ -24,7 +24,20 @@ class CharSetProber:
         are replaced by a single space ascii character.
         This filter applies to all scripts which do not use English characters.
         """
-        pass
+        filtered = bytearray()
+        i = 0
+        while i < len(buf):
+            if INTERNATIONAL_WORDS_PATTERN.match(buf[i:]):
+                match = INTERNATIONAL_WORDS_PATTERN.match(buf[i:])
+                filtered.extend(buf[i:i+match.end()])
+                i += match.end()
+            else:
+                # If no match, it's a marker. Replace contiguous markers with a space.
+                filtered.append(ord(' '))
+                i += 1
+                while i < len(buf) and not (buf[i] >= ord('a') and buf[i] <= ord('z')) and not (buf[i] >= ord('A') and buf[i] <= ord('Z')) and not (buf[i] >= 0x80 and buf[i] <= 0xFF):
+                    i += 1
+        return bytes(filtered)
 
     @staticmethod
     def remove_xml_tags(buf):
@@ -35,4 +48,16 @@ class CharSetProber:
         characters and extended ASCII characters, but is currently only used by
         ``Latin1Prober``.
         """
-        pass
+        filtered = bytearray()
+        in_tag = False
+        for byte in buf:
+            if byte == ord('<'):
+                in_tag = True
+            elif byte == ord('>'):
+                in_tag = False
+            elif not in_tag:
+                if (byte >= ord('a') and byte <= ord('z')) or \
+                   (byte >= ord('A') and byte <= ord('Z')) or \
+                   (byte >= 0x80):
+                    filtered.append(byte)
+        return bytes(filtered)
