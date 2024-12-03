@@ -36,7 +36,8 @@ class UTF1632Prober(CharSetProber):
 
         https://en.wikipedia.org/wiki/UTF-32
         """
-        pass
+        value = (quad[0] << 24) | (quad[1] << 16) | (quad[2] << 8) | quad[3]
+        return 0 <= value <= 0x10FFFF and not (0xD800 <= value <= 0xDFFF)
 
     def validate_utf16_characters(self, pair):
         """
@@ -48,4 +49,17 @@ class UTF1632Prober(CharSetProber):
 
         https://en.wikipedia.org/wiki/UTF-16
         """
-        pass
+        value = (pair[0] << 8) | pair[1]
+        
+        if 0xD800 <= value <= 0xDBFF:
+            # High surrogate, need to check the next pair
+            return 'high_surrogate'
+        elif 0xDC00 <= value <= 0xDFFF:
+            # Low surrogate, should only appear after a high surrogate
+            return 'low_surrogate'
+        elif value < 0xD800 or 0xE000 <= value <= 0xFFFF:
+            # Valid BMP character
+            return True
+        else:
+            # Invalid UTF-16 character
+            return False
